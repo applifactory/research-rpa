@@ -20,7 +20,7 @@ export class CompanyService {
       throw new HttpException({
         status: HttpStatus.CONFLICT,
         error: 'Company already exists',
-      }, 403);
+      }, HttpStatus.CONFLICT);
     }
     return await this.companyRepository.save(company);
   }
