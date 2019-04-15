@@ -4,15 +4,18 @@ import { Connection } from 'typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CompanyModule } from './company/company.module';
-import { LinkedinService } from './robot/linkedin/linkedin.service';
+import { ConfigModule } from './config/config.module';
+import { RobotModule } from './robot/robot.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(),
-    CompanyModule
+    CompanyModule,
+    ConfigModule,
+    RobotModule
   ],
   controllers: [AppController],
-  providers: [AppService, LinkedinService],
+  providers: [AppService],
 })
 export class AppModule {
   constructor(private readonly connection: Connection) {}

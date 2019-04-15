@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { Page, Browser, ElementHandle } from 'puppeteer';
-import { Company } from 'src/company/company.entity';
+import { ConfigService } from 'src/config/config.service';
 
 const SKIP_RESOURCE_TYPES: string[] = ['image', 'media', 'font', 'eventsource', 'websocket', 'manifest', 'other'];
 
@@ -10,7 +10,7 @@ export class LinkedinService {
 
   private browserInstance: Browser;
   private browserInitializing: Promise<Browser>;
-    
+
   get browser(): Promise<Browser> {
     if ( !this.browserInstance && this.browserInitializing ) {
       return this.browserInitializing;
@@ -22,16 +22,18 @@ export class LinkedinService {
       puppeteer.launch({
         headless: false,
         slowMo: 1,
-      defaultViewport: {
-        width: 1200,
-        height: 1200
-      }
+        defaultViewport: {
+          width: 1200,
+          height: 1200
+        }
       }).then( (browser) => {
         this.browserInstance = browser;
         return resolve(browser);
       })
     })
   }
+
+  constructor(private config: ConfigService) {}
 
   public async getCompanyDetails(linkedinProfileUrls: string | string[]): Promise<any> {
     
@@ -64,9 +66,9 @@ export class LinkedinService {
       if ( company.linkedinCompanyUrl.indexOf('.com/company/') > 0 ) {
         await page.goto(company.linkedinCompanyUrl, { waitUntil: 'domcontentloaded' });
         if ( company.linkedinCompanyUrl.match(/linkedin.com\/company\/[0-9]+\/.*/) ) {
-            await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+          await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
           company.linkedinCompanyUrl = page.url();
-          }
+        }
         try {
           company.websiteUrl = await page.$eval('[data-control-name="top_card_view_website_custom_cta_btn"]', link => (<any>link).href ) || company.websiteUrl;
         } catch(e) {}
@@ -102,15 +104,15 @@ export class LinkedinService {
       waitUntil: 'domcontentloaded'
     });
     try {
-    await page.focus('#login-email')
-    await page.keyboard.type('[EMAIL]');
-    await page.focus('#login-password')
-    await page.keyboard.type('[PASSWORD]');
-    await page.click('#login-submit');
-    await page.waitForNavigation({
-      waitUntil: 'networkidle2'
-    });
-    return !!await page.$('.profile-rail-card__actor-link span');
+      await page.focus('#login-email')
+      await page.keyboard.type(this.config.get('LINKEDIN_EMAIL'));
+      await page.focus('#login-password')
+      await page.keyboard.type(this.config.get('LINKEDIN_PASSWORD'));
+      await page.click('#login-submit');
+      await page.waitForNavigation({
+        waitUntil: 'networkidle2'
+      });
+      return !!await page.$('.profile-rail-card__actor-link span');
     } catch(e) {}
     try {
       return !!await page.$('.profile-rail-card__actor-link span');
