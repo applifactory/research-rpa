@@ -8,15 +8,34 @@ const SKIP_RESOURCE_TYPES: string[] = ['image', 'media', 'font', 'eventsource', 
 @Injectable()
 export class LinkedinService {
 
-  public async getCompanyDetails(linkedinProfileUrls: string | string[]): Promise<any> {
+  private browserInstance: Browser;
+  private browserInitializing: Promise<Browser>;
     
-    const browser: Browser = await puppeteer.launch({
-      // headless: false,
+  get browser(): Promise<Browser> {
+    if ( !this.browserInstance && this.browserInitializing ) {
+      return this.browserInitializing;
+    }
+    return this.browserInitializing = new Promise<Browser>( resolve => {
+      if ( this.browserInstance ) {
+        return resolve(this.browserInstance);
+      }
+      puppeteer.launch({
+        headless: false,
+        slowMo: 1,
       defaultViewport: {
-        width: 800,
+        width: 1200,
         height: 1200
       }
-    });
+      }).then( (browser) => {
+        this.browserInstance = browser;
+        return resolve(browser);
+      })
+    })
+  }
+
+  public async getCompanyDetails(linkedinProfileUrls: string | string[]): Promise<any> {
+    
+    const browser: Browser = await this.browser;
     const page: Page = await browser.newPage();
 
     await page.setRequestInterception(true);
@@ -29,34 +48,42 @@ export class LinkedinService {
     });
 
     if ( !await this.login(page) ) {
-      await browser.close();
+      await page.close();
       throw new HttpException({
         status: HttpStatus.UNAUTHORIZED,
         error: 'LinkedIn user unauthorized',
       }, HttpStatus.UNAUTHORIZED);
     }
 
-    const companies: any[] = ( typeof linkedinProfileUrls === 'string' ? [linkedinProfileUrls] : linkedinProfileUrls ).map( (url) => ({ linkedinUrl: url }) );
+    const companies: any[] = ( typeof linkedinProfileUrls === 'string' ? [linkedinProfileUrls] : linkedinProfileUrls ).map( (url) => ({ linkedinCompanyUrl: url }) );
     for ( let company of companies ) {
-      if ( company.linkedinUrl.indexOf('.com/in/') > 0 ) {
-        company.linkedinUrl = await this.getUserCompany(company.linkedinUrl, page);
+      if ( company.linkedinCompanyUrl.indexOf('.com/in/') > 0 ) {
+        company.linkedinPersonUrl = company.linkedinCompanyUrl;
+        company.linkedinCompanyUrl = await this.getUserCompany(company.linkedinCompanyUrl, page);
       }
-      if ( company.linkedinUrl.indexOf('.com/company/') > 0 ) {
-        await page.goto(company.linkedinUrl, { waitUntil: 'domcontentloaded' });
-        try {
-          if ( company.linkedinUrl.match(/linkedin.com\/company\/[0-9]+\/.*/) ) {
+      if ( company.linkedinCompanyUrl.indexOf('.com/company/') > 0 ) {
+        await page.goto(company.linkedinCompanyUrl, { waitUntil: 'domcontentloaded' });
+        if ( company.linkedinCompanyUrl.match(/linkedin.com\/company\/[0-9]+\/.*/) ) {
             await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-            company.linkedinUrl = page.url();
+          company.linkedinCompanyUrl = page.url();
           }
+        try {
           company.websiteUrl = await page.$eval('[data-control-name="top_card_view_website_custom_cta_btn"]', link => (<any>link).href ) || company.websiteUrl;
+        } catch(e) {}
+        if ( !company.websiteUrl ) {
+          try {
+            company.websiteUrl = await page.$eval('[data-control-name="top_card_learn_more_custom_cta_btn"]', link => (<any>link).href ) || company.websiteUrl;
+          } catch(e) {}
+        }
+        try {
           company.name = await page.$eval('.org-top-card-summary__title span', name => (<any>name).textContent ) || company.name;
         } catch(e) {}
       } else {
-        company.linkedinUrl = null;
+        company.linkedinCompanyUrl = null;
       }
     }
 
-    await browser.close();
+    await page.close();
     return companies;
   }
 
@@ -74,6 +101,7 @@ export class LinkedinService {
     await page.goto('https://linkedin.com', {
       waitUntil: 'domcontentloaded'
     });
+    try {
     await page.focus('#login-email')
     await page.keyboard.type('[EMAIL]');
     await page.focus('#login-password')
@@ -83,6 +111,11 @@ export class LinkedinService {
       waitUntil: 'networkidle2'
     });
     return !!await page.$('.profile-rail-card__actor-link span');
+    } catch(e) {}
+    try {
+      return !!await page.$('.profile-rail-card__actor-link span');
+    } catch(e) {}
+    return false;
   }
 
 }
