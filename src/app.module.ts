@@ -6,13 +6,15 @@ import { AppService } from './app.service';
 import { CompanyModule } from './company/company.module';
 import { ConfigModule } from './config/config.module';
 import { RobotModule } from './robot/robot.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(),
     CompanyModule,
     ConfigModule,
-    RobotModule
+    RobotModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: [AppService],
