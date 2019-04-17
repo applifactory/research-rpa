@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { CompanyModule } from './company/company.module';
 import { ConfigModule } from './config/config.module';
 import { RobotModule } from './robot/robot.module';
+import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { UserModule } from './user/user.module';
     CompanyModule,
     ConfigModule,
     RobotModule,
+    AuthModule,
     UserModule
   ],
   controllers: [AppController],

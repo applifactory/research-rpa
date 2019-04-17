@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { pick } from 'lodash';
 import { Company } from './company.entity';
 import { CompanyService } from './company.service';
 import { LinkedinService } from '../robot/linkedin/linkedin.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('company')
+@UseGuards(JwtAuthGuard)
 export class CompanyController {
 
   constructor(
@@ -28,7 +30,8 @@ export class CompanyController {
   @Get('fetch')
   public async fetch(): Promise<any> {
     return this.linkedInService.getCompanyDetails([
-      '[LINKEDIN_URL]'
+      'https://www.linkedin.com/company/leocode/',
+      'https://www.linkedin.com/in/mateuszwitalinski/'
     ]);
   }
 
