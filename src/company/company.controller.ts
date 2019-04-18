@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Logger } from '@nestjs/common';
+import { Request } from 'express';
 import { pick } from 'lodash';
 import { Company } from './company.entity';
 import { CompanyService } from './company.service';
 import { LinkedinService } from '../robot/linkedin/linkedin.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtRequest } from 'src/auth/interfaces/jwt-request.interface';
 
 @Controller('company')
 @UseGuards(JwtAuthGuard)
@@ -15,7 +17,8 @@ export class CompanyController {
   ) {}
 
   @Get()
-  public findAll() {
+  public findAll(@Req() request: JwtRequest) {
+    Logger.debug(request.user);
     return this.companyService.findAll();
   }
 
