@@ -7,6 +7,8 @@ import { ConfigModule } from 'src/config/config.module';
 import { ConfigService } from 'src/config/config.service';
 import { UserModule } from 'src/user/user.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { WsJwtAuthGuard } from './guards/ws-jwt-auth.guard';
+import { AuthService } from './auth.service';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     TypeOrmModule.forFeature([User])
   ],
   controllers: [AuthController],
-  providers: [JwtAuthGuard],
-  exports: [JwtAuthGuard]
+  providers: [JwtAuthGuard, WsJwtAuthGuard, AuthService],
+  exports: [JwtAuthGuard, WsJwtAuthGuard, AuthService]
 })
 export class AuthModule {}

@@ -8,6 +8,7 @@ import { ConfigModule } from './config/config.module';
 import { RobotModule } from './robot/robot.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { SocketModule } from './socket/socket.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { UserModule } from './user/user.module';
     ConfigModule,
     RobotModule,
     AuthModule,
-    UserModule
+    UserModule,
+    SocketModule
   ],
   controllers: [AppController],
   providers: [AppService],
