@@ -4,6 +4,8 @@ import { AuthService } from 'src/auth/auth.service';
 import { User } from 'src/user/user.entity';
 import { Server } from 'socket.io';
 import { WsJwtAuthGuard } from 'src/auth/guards/ws-jwt-auth.guard';
+import { SocketEvent } from './models/socket-event';
+import { SocketEventType } from './models/socket-event-type';
 
 
 @WebSocketGateway()
@@ -29,9 +31,11 @@ export class SocketGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   @UseGuards(WsJwtAuthGuard)
-  @SubscribeMessage('message')
-  handleMessage(client: any, payload: any) {
-    client.emit('event', 'hello from `handleMessage(message)`');
+  @SubscribeMessage('event')
+  handleMessage(client: any, event: SocketEvent) {
+    if ( event.type == SocketEventType.MESSAGE ) {
+      client.emit('event', { type: SocketEventType.MESSAGE, message: `hello! [${event.message}]` });
+    }
   }
 
 }
