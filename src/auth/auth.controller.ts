@@ -18,11 +18,11 @@ export class AuthController {
   @Post()
   public async login(@Body() data: any): Promise<any> {
     if ( !data.email || !data.password ) {
-      throw new BadRequestException('Missing parameter');
+      throw new BadRequestException(`Missing ${!data.email ? 'email' : 'password'} parameter`);
     }
     const user: User = await this.userService.login( data.email, data.password );
     if ( !user ) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Wrong email or password');
     }
     const jwtPayload: JwtPayload = { _id: user._id.toString(), email: user.email };
     const accessToken = this.jwtService.sign(jwtPayload);
